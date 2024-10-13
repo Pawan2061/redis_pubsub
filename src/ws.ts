@@ -16,6 +16,10 @@ export function StartwsServer(port: number) {
     const userId = uuid();
     ws.userId = userId;
 
-    pubsubManager.userSubscribe(ws.userId, "room1");
+    pubsubManager.userSubscribe(ws.userId, "myroom");
+  });
+  wss.on("close", async (ws: ChatClient) => {
+    const userid = ws.userId;
+    pubsubManager.userUnsubscribe(userid, "myroom");
   });
 }

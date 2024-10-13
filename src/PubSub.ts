@@ -28,28 +28,50 @@ export class PubSubManager {
 
     if (this.subscriptions.get(channel)?.length === 1) {
       this.redisClient.publish(channel, "connected to the sujith server");
+
       this.redisClient.subscribe(channel, (message) => {
         this.handleMessage(channel, message);
+        console.log("here");
       });
       console.log(`subscribed to channel ${channel}`);
     }
   }
 
   public userUnsubscribe(userId: string, channel: string) {
-    if (!this.subscriptions.get(channel)) {
-      this.subscriptions.set(
-        channel,
-        this.subscriptions.get(channel)?.filter((id) => id !== userId) || []
-      );
-    }
+    this.redisClient.unsubscribe(userId);
 
-    if (this.subscriptions.get(channel)?.length === 0) {
-      this.redisClient.unsubscribe(channel);
-      console.log(`unsubscribed from the channel ${channel}`);
-    }
+    this.redisClient.unsubscribe(channel);
+    // const ids = this.subscriptions.get(channel);
+    // console.log(ids);
+
+    // if (ids) {
+    //   const updatedUserIds = ids.filter((id) => id !== userId);
+    //   console.log(updatedUserIds);
+
+    //   this.subscriptions.set(channel, updatedUserIds);
+
+    //   // Publish disconnect message when the last user unsubscribes
+    //   if (updatedUserIds.length === 0) {
+    //     this.redisClient.publish(channel, "disconnect");
+    //     this.redisClient.unsubscribe(channel);
+    //     console.log(`Unsubscribed from channel ${channel}`);
+    //   }
+    // }
+    // // if (!this.subscriptions.get(channel)) {
+    //   this.subscriptions.set(
+    //     channel,
+    //     this.subscriptions.get(channel)?.filter((id) => id !== userId) || []
+    //   );
+    // }
+
+    // if (this.subscriptions.get(channel)?.length === 0) {
+    //   //   this.redisClient.publish(channel, "disconnect");
+    //   this.redisClient.unsubscribe(channel);
+    //   console.log(`unsubscribed from the channel ${channel}`);
+    // }
   }
   private async handleMessage(channel: string, message: string) {
-    console.log(message);
+    console.log(message, "here");
 
     // this.subscriptions.get(channel)?.forEach((client) => {
     //   console.log(`sending message to user ${client}`);
