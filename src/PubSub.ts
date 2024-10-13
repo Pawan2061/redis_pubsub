@@ -4,14 +4,34 @@ import { ChatClient } from "./interfaces";
 
 export class PubSubManager {
   private static instance: PubSubManager;
-  private redisClient: RedisClientType;
+  private pubClient: RedisClientType;
+  private subClient: RedisClientType;
+
   private subscriptions: Map<string, string[]>;
 
   private constructor() {
-    this.redisClient = createClient();
+    this.subClient = createClient({ url: "redis://localhost:6379" });
 
-    this.redisClient.connect();
+    this.pubClient = createClient({ url: "redis://localhost:6379" });
+
+    // this.subClient.connect();
+    // this.pubClient.connect();
     this.subscriptions = new Map();
+  }
+  private async ensureRedisConnection() {
+    try {
+      if (!this.pubClient.isOpen) {
+        console.log("Connecting pub client to Redis...");
+        await this.pubClient.connect();
+      }
+      if (!this.subClient.isOpen) {
+        console.log("Connecting sub client to Redis...");
+        await this.subClient.connect();
+      }
+    } catch (error) {
+      console.error("Failed to connect to Redis:", error);
+      throw error;
+    }
   }
 
   public static getInstance(): PubSubManager {
@@ -21,68 +41,50 @@ export class PubSubManager {
     return PubSubManager.instance;
   }
 
-  public userSubscribe(userId: string, channel: string) {
+  public async userSubscribe(userId: string, channel: string) {
+    await this.ensureRedisConnection();
     if (!this.subscriptions.has(channel)) {
       this.subscriptions.set(channel, []);
     }
     this.subscriptions.get(channel)?.push(userId);
 
     if (this.subscriptions.get(channel)?.length === 1) {
-      this.redisClient.publish(channel, "connected to the sujith server");
+      await this.pubClient.publish(
+        channel,
+        JSON.stringify("connected to the sujith server")
+      );
 
-      this.redisClient.subscribe(channel, (message) => {
-        this.handleMessage(channel, message);
-      });
+      // this.subClient.subscribe(channel, (message) => {
+      //   this.handleMessage(channel, message);
+      // });
       console.log(`subscribed to channel ${channel}`);
     }
   }
 
   public async userUnsubscribe(userId: string, channel: string) {
-    // await this.handleMessage(channel, "disconnecting");
+    await this.ensureRedisConnection();
 
-    // await this.redisClient.unsubscribe(userId);
-    console.log("working here");
+    await this.pubClient.publish(channel, JSON.stringify("hello by"));
+    await this.subClient.unsubscribe(userId);
 
-    await this.redisClient.publish(channel, JSON.stringify("hello by"));
-
-    await this.redisClient.unsubscribe(channel);
-    // const ids = this.subscriptions.get(channel);
-    // console.log(ids);
-
-    // if (ids) {
-    //   const updatedUserIds = ids.filter((id) => id !== userId);
-    //   console.log(updatedUserIds);
-
-    //   this.subscriptions.set(channel, updatedUserIds);
-
-    //   // Publish disconnect message when the last user unsubscribes
-    //   if (updatedUserIds.length === 0) {
-    //     this.redisClient.publish(channel, "disconnect");
-    //     this.redisClient.unsubscribe(channel);
-    //     console.log(`Unsubscribed from channel ${channel}`);
-    //   }
-    // }
-    // // if (!this.subscriptions.get(channel)) {
-    //   this.subscriptions.set(
-    //     channel,
-    //     this.subscriptions.get(channel)?.filter((id) => id !== userId) || []
-    //   );
-    // }
-
-    // if (this.subscriptions.get(channel)?.length === 0) {
-    //   //   this.redisClient.publish(channel, "disconnect");
-    //   this.redisClient.unsubscribe(channel);
-    //   console.log(`unsubscribed from the channel ${channel}`);
-    // }
+    await this.subClient.unsubscribe(channel, () => {
+      this.handleMessage(channel, "disconnect");
+    });
   }
   private async handleMessage(channel: string, message: string) {
     console.log(message, "here");
 
-    await this.redisClient.publish(channel, JSON.stringify(message));
+    await this.pubClient.publish(channel, JSON.stringify(message));
   }
-  //listen for room message async await this.client .suscribe await ("roomid")
+
+  public async sendMessage(userId: string, channel: string, data: any) {
+    await this.ensureRedisConnection();
+
+    await this.pubClient.publish(channel, JSON.stringify(data));
+  }
   public async disconnect() {
-    await this.redisClient.quit();
+    await this.pubClient.quit();
+    await this.subClient.quit();
   }
 }
 
