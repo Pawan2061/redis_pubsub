@@ -2,10 +2,12 @@ import express from "express";
 
 import { createClient } from "redis";
 import { pubConnect } from "./pub";
-import { subConnect } from "./sub";
+import { WebSocketServer } from "ws";
 
 const app = express();
 app.use(express.json());
+
+const wss = new WebSocketServer({ port: 8050 });
 export const pubClient = createClient({
   url: "redis://localhost:6379",
 });
