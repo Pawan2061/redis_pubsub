@@ -1,5 +1,6 @@
 import { createClient, RedisClientType } from "redis";
 import { pubClient } from "./pub";
+import { ChatClient } from "./interfaces";
 
 export class PubSubManager {
   private static instance: PubSubManager;
@@ -25,7 +26,8 @@ export class PubSubManager {
     }
     this.subscriptions.get(channel)?.push(userId);
 
-    if (this.subscriptions.get(channel)?.length == 1) {
+    if (this.subscriptions.get(channel)?.length === 1) {
+      this.redisClient.publish(channel, "connected to the sujith server");
       this.redisClient.subscribe(channel, (message) => {
         this.handleMessage(channel, message);
       });
@@ -47,7 +49,6 @@ export class PubSubManager {
     }
   }
   private async handleMessage(channel: string, message: string) {
-    console.log("reached here");
     console.log(message);
 
     // this.subscriptions.get(channel)?.forEach((client) => {
