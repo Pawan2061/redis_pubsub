@@ -9,15 +9,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.pubClient = void 0;
 exports.pubConnect = pubConnect;
-const _1 = require(".");
+const redis_1 = require("redis");
+const pubClient = (0, redis_1.createClient)({
+    url: "redis://localhost:6379",
+});
+exports.pubClient = pubClient;
 function pubConnect() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            if (!_1.pubClient.isOpen) {
+            if (!pubClient.isOpen) {
                 // Ensure we connect if not already connected
-                console.log("Connecting sub client to Redis...");
-                yield _1.pubClient.connect();
+                console.log("Connecting pub client to Redis...");
+                yield pubClient.connect();
             }
         }
         catch (error) {

@@ -1,4 +1,8 @@
-import { pubClient } from ".";
+import { createClient } from "redis";
+const pubClient = createClient({
+  url: "redis://localhost:6379",
+});
+
 export async function pubConnect() {
   try {
     if (!pubClient.isOpen) {

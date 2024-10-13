@@ -19,7 +19,7 @@ function subConnect() {
         try {
             if (!subClient.isOpen) {
                 // Connect only if not already connected
-                console.log("Connecting pub client to Redis...");
+                console.log("Connecting sub client to Redis...");
                 yield subClient.connect();
             }
         }
@@ -29,3 +29,14 @@ function subConnect() {
         }
     });
 }
+function startServer() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield subConnect();
+        }
+        catch (error) {
+            console.log(error);
+        }
+    });
+}
+startServer();

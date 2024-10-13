@@ -1,4 +1,5 @@
 import { createClient, RedisClientType } from "redis";
+import { pubClient } from "./pub";
 
 export class PubSubManager {
   private static instance: PubSubManager;
@@ -45,13 +46,22 @@ export class PubSubManager {
       console.log(`unsubscribed from the channel ${channel}`);
     }
   }
-  private handleMessage(channel: string, message: string) {
-    this.subscriptions.get(channel)?.forEach((userId) => {
-      console.log(`sending message to user ${userId}`);
-    });
+  private async handleMessage(channel: string, message: string) {
+    console.log("reached here");
+    console.log(message);
+
+    // this.subscriptions.get(channel)?.forEach((client) => {
+    //   console.log(`sending message to user ${client}`);
+    //   this.redisClient.subscribe(channel, (message: string) => {
+    //     console.log(`subscribed to channel with message ${message}`);
+    //   });
+    // });
+    await this.redisClient.publish(channel, JSON.stringify(message));
   }
 
   public async disconnect() {
     await this.redisClient.quit();
   }
 }
+
+export const pubsubManager = PubSubManager.getInstance();
