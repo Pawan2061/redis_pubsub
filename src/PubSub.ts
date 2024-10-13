@@ -1,5 +1,4 @@
 import { createClient, RedisClientType } from "redis";
-import { pubClient } from "./pub";
 import { ChatClient } from "./interfaces";
 
 export class PubSubManager {
